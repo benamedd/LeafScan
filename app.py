@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from flask import Flask, render_template, request, jsonify
+from flask_cors import CORS  # Importer Flask-CORS pour gérer CORS
 import leaf_analysis
 from PIL import Image
 import numpy as np
@@ -11,6 +12,8 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})  # Autoriser toutes les origines pour éviter les erreurs CORS
+
 UPLOAD_FOLDER = "static/uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
@@ -51,8 +54,8 @@ def upload():
 
         return jsonify({
             "severity": f"{severity:.2f}%",
-            "image_url": file_path,
-            "infected_mask_url": infected_mask_path
+            "image_url": f"/static/uploads/{file.filename}",
+            "infected_mask_url": f"/static/uploads/infected_mask.png"
         })
 
     except Exception as e:
@@ -60,4 +63,4 @@ def upload():
         return jsonify({"error": f"Error processing image: {str(e)}"}), 400
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, host="0.0.0.0", port=5000)  # Modifier pour accepter toutes les connexions
