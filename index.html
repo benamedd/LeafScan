@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaf Disease Severity Analyzer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: #fff;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            max-width: 900px;
+            width: 100%;
+            padding: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #2c3e50;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .upload-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .upload-section input[type="file"] {
+            display: none;
+        }
+
+        .upload-section label {
+            background: #3498db;
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.3s ease;
+        }
+
+        .upload-section label:hover {
+            background: #2980b9;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .button-group button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        #analyze-btn {
+            background: #2ecc71;
+            color: #fff;
+        }
+
+        #analyze-btn:hover {
+            background: #27ae60;
+        }
+
+        #refresh-btn {
+            background: #e74c3c;
+            color: #fff;
+        }
+
+        #refresh-btn:hover {
+            background: #c0392b;
+        }
+
+        .result-section {
+            margin-top: 30px;
+            text-align: left;
+        }
+
+        .result-section h2 {
+            color: #2c3e50;
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+        }
+
+        .result-section h3 {
+            color: #34495e;
+            font-size: 1.2rem;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .result-section img {
+            max-width: 100%;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .error {
+            color: #e74c3c;
+            font-size: 1rem;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .button-group {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .button-group button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Leaf Disease Severity Analyzer</h1>
+        <div class="upload-section">
+            <label for="file">Select an Image</label>
+            <input type="file" id="file" name="file" accept=".jpg,.png">
+            <div class="button-group">
+                <button id="analyze-btn" disabled>Analyze Image</button>
+                <button id="refresh-btn">Clear Results</button>
+            </div>
+        </div>
+        <div class="result-section" id="result">
+            <!-- Results will be displayed here -->
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById("file");
+        const analyzeBtn = document.getElementById("analyze-btn");
+        const refreshBtn = document.getElementById("refresh-btn");
+        const resultDiv = document.getElementById("result");
+        let selectedFile = null;
+
+        // Enable/disable analyze button based on file selection
+        fileInput.addEventListener("change", (e) => {
+            selectedFile = e.target.files[0];
+            analyzeBtn.disabled = !selectedFile;
+        });
+
+        // Handle analyze button click
+        analyzeBtn.addEventListener("click", async (e) => {
+            e.preventDefault();
+            if (!selectedFile) return;
+
+            const formData = new FormData();
+            formData.append("file", selectedFile);
+            resultDiv.innerHTML = "<p>Processing...</p>";
+
+            try {
+                const response = await fetch("/upload", {
+                    method: "POST",
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (data.error) {
+                    resultDiv.innerHTML = `<p class="error">${data.error}</p>`;
+                } else {
+                    resultDiv.innerHTML = `
+                        <h2>Infection Severity: ${data.severity}</h2>
+                        <h3>Uploaded Image:</h3>
+                        <img src="${data.image_url}" alt="Uploaded Image">
+                        <h3>Infected Areas:</h3>
+                        <img src="${data.infected_mask_url}" alt="Infected Areas">
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+            }
+        });
+
+        // Handle refresh button click
+        refreshBtn.addEventListener("click", () => {
+            fileInput.value = "";
+            selectedFile = null;
+            analyzeBtn.disabled = true;
+            resultDiv.innerHTML = "";
+        });
+    </script>
+</body>
+</html>
